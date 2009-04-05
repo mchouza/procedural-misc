@@ -10,6 +10,8 @@ namespace
 {
 	const double PI = 3.1415926535897932384626433832795;
 
+    const int N = 128;
+
 	double alpha = 0.0;
 	double beta = 0.0;
 	double dist = 2.0;
@@ -38,7 +40,7 @@ float mfNoise(float x, float y)
     for (int i = 0; i < 5; i++)
     {
         ret += (signal = weight * amp * (float)noise2(r));
-        amp /= 1.5f;
+        amp /= 1.2f;
         r[0] *= 2.0f;
         r[1] *= 2.0f;
         weight = clamp(signal / 0.1f, 0.0f, 1.0f);
@@ -49,39 +51,53 @@ float mfNoise(float x, float y)
 
 void fillHeightMap(float* hm)
 {
-    for (int i = 0; i < 128 * 128; i++)
+    for (int i = 0; i < N * N; i++)
     {
         float x, y;
-        x = (8.0f * (float)(i % 128)) / 128;
-        y = (8.0f * (float)(i / 128)) / 128;
+        x = (4.0f * (float)(i % N)) / N;
+        y = (4.0f * (float)(i / N)) / N;
         hm[i] = mfNoise(x, y) / 18.0f;
     }
 }
 
 void fillNormalMap(float* nm, float* hm)
 {
-    for (int i = 0; i < 128; i++)
+    for (int i = 0; i < N; i++)
     {
-        for (int j = 0; j < 128; j++)
+        for (int j = 0; j < N; j++)
         {
-            float val = hm[i * 128 + j];
-            float nextX = (j < 128 - 1) ?
-                          hm[i * 128 + (j + 1)] :
-                          2 * val - hm[i * 128 + (j - 1)];
-            float nextY = (i < 128 - 1) ?
-                          hm[(i + 1) * 128 + j] :
-                          2 * val - hm[(i - 1) * 128 + j];
-            nm[3 * (128 * i + j) + 0] = -128.0f * (nextX - val);
-            nm[3 * (128 * i + j) + 1] = -128.0f * (nextY - val);
-            nm[3 * (128 * i + j) + 2] = 1.0f;
+            float val = hm[i * N + j];
+            float nextX = (j < N - 1) ?
+                          hm[i * N + (j + 1)] :
+                          2 * val - hm[i * N + (j - 1)];
+            float nextY = (i < N - 1) ?
+                          hm[(i + 1) * N + j] :
+                          2 * val - hm[(i - 1) * N + j];
+            nm[3 * (N * i + j) + 0] = -N * (nextX - val);
+            nm[3 * (N * i + j) + 1] = -N * (nextY - val);
+            nm[3 * (N * i + j) + 2] = 1.0f;
         }
+    }
+}
+
+void fillColorMap(float* cm, float* hm)
+{
+    for (int i = 0; i < N * N; i++)
+    {
+        float sh = hm[i] * N;
+        float r = clamp(sh, 0.0f, 1.0f);
+        float b = clamp(-sh, 0.0f, 1.0f);
+        float g = clamp((float)abs(1.0 / sh), 0.0f, 1.0f);
+        cm[3*i + 0] = r;
+        cm[3*i + 1] = g;
+        cm[3*i + 2] = b;
     }
 }
 
 void setup()
 {
+    glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_NORMALIZE);
@@ -97,29 +113,36 @@ void setup()
     float lightPos[4] = {0.0f, 1.0f, 1.0f, 1.0f};
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
     glShadeModel(GL_SMOOTH);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
-    static float hm[128*128];
-    static float nm[128*128*3];
+    static float hm[N*N];
+    static float nm[N*N*3];
+    static float cm[N*N*3];
     
     fillHeightMap(hm);
     fillNormalMap(nm, hm);
+    fillColorMap(cm, hm);
 
     terrainList = glGenLists(1);
 
     glNewList(terrainList, GL_COMPILE); 
-    for (int i = 0; i < 128 - 1; i++)
+    for (int i = 0; i < N - 1; i++)
     {
         glBegin(GL_TRIANGLE_STRIP);
-        glNormal3fv(&nm[((i + 1) * 128 + 0) * 3 + 0]);
-        glVertex3f(0.0f, (i + 1) / 128.0f, hm[(i + 1) * 128]);
-        glNormal3fv(&nm[(i * 128 + 0) * 3 + 0]);
-        glVertex3f(0.0f, i / 128.0f, hm[i * 128]);
-        for (int j = 1; j < 128; j++)
+        glNormal3fv(&nm[((i + 1) * N + 0) * 3 + 0]);
+        glColor3fv(&cm[((i + 1) * N + 0) * 3 + 0]);
+        glVertex3f(0.0f, (i + 1) / (float)N, hm[(i + 1) * N]);
+        glNormal3fv(&nm[(i * N + 0) * 3 + 0]);
+        glColor3fv(&cm[(i * N + 0) * 3 + 0]);
+        glVertex3f(0.0f, i / (float)N, hm[i * N]);
+        for (int j = 1; j < N; j++)
         {
-            glNormal3fv(&nm[((i + 1) * 128 + j) * 3 + 0]);
-            glVertex3f(j / 128.0f, (i + 1) / 128.0f, hm[(i + 1) * 128 + j]);
-            glNormal3fv(&nm[(i * 128 + j) * 3 + 0]);
-            glVertex3f(j / 128.0f, i / 128.0f, hm[i * 128 + j]);
+            glNormal3fv(&nm[((i + 1) * N + j) * 3 + 0]);
+            glColor3fv(&cm[((i + 1) * N + j) * 3 + 0]);
+            glVertex3f(j / (float)N, (i + 1) / (float)N, hm[(i + 1) * N + j]);
+            glNormal3fv(&nm[(i * N + j) * 3 + 0]);
+            glColor3fv(&cm[(i * N + j) * 3 + 0]);
+            glVertex3f(j / (float)N, i / (float)N, hm[i * N + j]);
         }
         glEnd();
     }
@@ -171,6 +194,9 @@ bool handleEvent(const SDL_Event& e)
 {	
 	if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
 		return false;
+
+    if (e.type == SDL_QUIT)
+        return false;
 	
 	if (e.type == SDL_KEYDOWN)
 		keyMap[e.key.keysym.sym] = true;
@@ -192,7 +218,7 @@ void draw()
 int main(int argc, char* argv[])
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
-	SDL_SetVideoMode(1024, 768, 32, SDL_OPENGL | SDL_FULLSCREEN);
+	SDL_SetVideoMode(1024, 768, 32, SDL_OPENGL);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	setup();
