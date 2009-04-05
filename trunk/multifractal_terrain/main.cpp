@@ -1,26 +1,27 @@
 // This is *incredibly ugly* "first draft code"
 
-#include <stdlib.h>
+#include <cmath>
 #include <SDL.h>
 #include <SDL_opengl.h>
 
-GLuint mfTexID;
-
 extern "C" double noise2(double *);
 
-float sqr(float x)
+namespace
 {
-    return x * x;
+	const double PI = 3.1415926535897932384626433832795;
+
+	double alpha = 0.0;
+	double beta = 0.0;
+	double dist = 2.0;
+
+    GLuint terrainList;
+
+	bool keyMap[SDLK_LAST];
 }
 
 float clamp(float x, float l, float h)
 {
-    if (x < l)
-        return l;
-    else if (x > h)
-        return h;
-    else
-        return x;
+    return (x > h) ? h : ((x < l) ? l: x);
 }
 
 float mfNoise(float x, float y)
@@ -40,129 +41,173 @@ float mfNoise(float x, float y)
         amp /= 1.5f;
         r[0] *= 2.0f;
         r[1] *= 2.0f;
-        weight = clamp(signal / 0.3, 0.0f, 1.0f);
+        weight = clamp(signal / 0.1f, 0.0f, 1.0f);
     }
 
     return ret;
 }
 
-void fillHeightMap(uint32_t* hm)
+void fillHeightMap(float* hm)
 {
-    for (int i = 0; i < 512 * 512; i++)
+    for (int i = 0; i < 128 * 128; i++)
     {
         float x, y;
-        x = (8.0f * (float)(i % 512)) / 512;
-        y = (8.0f * (float)(i / 512)) / 512;
-        int h = (int)(127.5 * (mfNoise(x, y) + 1.0));
-        hm[i] = h | h << 8 | h << 16;
+        x = (8.0f * (float)(i % 128)) / 128;
+        y = (8.0f * (float)(i / 128)) / 128;
+        hm[i] = mfNoise(x, y) / 18.0f;
     }
 }
 
-bool initVideo()
+void fillNormalMap(float* nm, float* hm)
 {
-    if (SDL_Init(SDL_INIT_VIDEO))
-        return false;
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_Surface* screen = SDL_SetVideoMode(800, 600, 32, SDL_OPENGL);
-    if (!screen)
-        return false;
-
-    return true;
+    for (int i = 0; i < 128; i++)
+    {
+        for (int j = 0; j < 128; j++)
+        {
+            float val = hm[i * 128 + j];
+            float nextX = (j < 128 - 1) ?
+                          hm[i * 128 + (j + 1)] :
+                          2 * val - hm[i * 128 + (j - 1)];
+            float nextY = (i < 128 - 1) ?
+                          hm[(i + 1) * 128 + j] :
+                          2 * val - hm[(i - 1) * 128 + j];
+            nm[3 * (128 * i + j) + 0] = -128.0f * (nextX - val);
+            nm[3 * (128 * i + j) + 1] = -128.0f * (nextY - val);
+            nm[3 * (128 * i + j) + 2] = 1.0f;
+        }
+    }
 }
 
-bool initGL()
+void setup()
 {
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_NORMALIZE);
+    //glPolygonMode(GL_FRONT_AND_BACK , GL_LINE);
+
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, 1024, 768);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0.0f, 800, 600, 0.0f, -1.0f, 1.0f);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    gluPerspective(45.0, 800.0 / 600.0, 0.01, 100.0);
 
-    return true;
+    float lightPos[4] = {0.0f, 1.0f, 1.0f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+    glShadeModel(GL_SMOOTH);
+
+    static float hm[128*128];
+    static float nm[128*128*3];
+    
+    fillHeightMap(hm);
+    fillNormalMap(nm, hm);
+
+    terrainList = glGenLists(1);
+
+    glNewList(terrainList, GL_COMPILE); 
+    for (int i = 0; i < 128 - 1; i++)
+    {
+        glBegin(GL_TRIANGLE_STRIP);
+        glNormal3fv(&nm[((i + 1) * 128 + 0) * 3 + 0]);
+        glVertex3f(0.0f, (i + 1) / 128.0f, hm[(i + 1) * 128]);
+        glNormal3fv(&nm[(i * 128 + 0) * 3 + 0]);
+        glVertex3f(0.0f, i / 128.0f, hm[i * 128]);
+        for (int j = 1; j < 128; j++)
+        {
+            glNormal3fv(&nm[((i + 1) * 128 + j) * 3 + 0]);
+            glVertex3f(j / 128.0f, (i + 1) / 128.0f, hm[(i + 1) * 128 + j]);
+            glNormal3fv(&nm[(i * 128 + j) * 3 + 0]);
+            glVertex3f(j / 128.0f, i / 128.0f, hm[i * 128 + j]);
+        }
+        glEnd();
+    }
+    glEndList();
 }
 
-bool initWorld()
+void update()
 {
-    glGenTextures(1, &mfTexID);
-    glBindTexture(GL_TEXTURE_2D, mfTexID);
+	static int lastTime = SDL_GetTicks();
+	int newTime = SDL_GetTicks();
+	double deltaT = (newTime - lastTime) / 1000.0;
+	lastTime = newTime;
 
-    uint32_t* pTexData = new uint32_t[512 * 512];
-    fillHeightMap(pTexData);
+	double alphaPrime = 0.0, betaPrime = 0.0, distPrime = 0.0;
 
-    glTexImage2D(GL_TEXTURE_2D, 0, 4, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
-        pTexData);
+	if (keyMap[SDLK_LEFT])
+		alphaPrime -= 0.5;
+	if (keyMap[SDLK_RIGHT])
+		alphaPrime += 0.5;
+	if (keyMap[SDLK_DOWN])
+		betaPrime -= 0.5;
+	if (keyMap[SDLK_UP])
+		betaPrime += 0.5;
+	if (keyMap[SDLK_PAGEDOWN])
+		distPrime += 2.5;
+	if (keyMap[SDLK_PAGEUP])
+		distPrime -= 2.5;
 
-    delete[] pTexData;
+	alpha += deltaT * alphaPrime;
+	beta += deltaT * betaPrime;
+	dist += deltaT * distPrime;
 
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
+	alpha = (alpha > 2 * PI) ? alpha - 2 * PI : alpha;
+	alpha = (alpha < -2 * PI) ? alpha +  2 * PI : alpha;
+	beta = (beta > 1.0) ? 1.0 : beta;
+	beta = (beta < -1.0) ? -1.0 : beta;
 
-    glEnable(GL_TEXTURE_2D);
-
-    if (glGetError() != GL_NO_ERROR)
-        return false;
-
-    return true;
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(
+		dist * cos(alpha) * cos(beta) + 0.5,
+		dist * sin(alpha) * cos(beta) + 0.5,
+		dist * sin(beta),
+		0.5, 0.5, 0.0,
+		0.0, 0.0, 1.0);
 }
 
-bool detectQuitRequest()
-{
-    SDL_Event ev;
-    if (!SDL_PollEvent(&ev))
-        return false;
-    return ev.type == SDL_QUIT;
+bool handleEvent(const SDL_Event& e)
+{	
+	if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
+		return false;
+	
+	if (e.type == SDL_KEYDOWN)
+		keyMap[e.key.keysym.sym] = true;
+	else if (e.type == SDL_KEYUP)
+		keyMap[e.key.keysym.sym] = false;
+
+	return true;
 }
 
-bool drawWorld()
+void draw()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBindTexture(GL_TEXTURE_2D, mfTexID);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glBegin( GL_QUADS );
-        glColor3f(1, 1, 1);
-        glTexCoord2i(0, 0);
-        glVertex2i(0, 0);
-        glTexCoord2i(1, 0);
-        glVertex2i(500, 0);
-        glTexCoord2i(1, 1);
-        glVertex2i(500, 500);
-        glTexCoord2i(0, 1);
-        glVertex2i(0, 500);
-    glEnd();
+    glCallList(terrainList);
 
     SDL_GL_SwapBuffers();
-
-    if (glGetError() != GL_NO_ERROR)
-        return false;
-
-    return true;
-}
-
-void finishVideo()
-{
-    SDL_Quit();
 }
 
 int main(int argc, char* argv[])
 {
-    if (!initVideo())
-        return 1;
-    if (!initGL())
-        return 1;
-    if (!initWorld())
-        return 1;
+	SDL_Init(SDL_INIT_EVERYTHING);
+	SDL_SetVideoMode(1024, 768, 32, SDL_OPENGL | SDL_FULLSCREEN);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-    while (!detectQuitRequest())
-        if (!drawWorld())
-            break;
+	setup();
 
-    finishVideo();
+	SDL_Event e;
+	while (true)
+	{
+		if (SDL_PollEvent(&e))
+			if (!handleEvent(e))
+				break;
 
-    return 0;
+		update();
+		draw();
+	}
+
+	SDL_Quit();
+	return 0;
 }
