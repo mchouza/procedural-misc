@@ -8,21 +8,39 @@ GLuint mfTexID;
 
 extern "C" double noise2(double *);
 
+float sqr(float x)
+{
+    return x * x;
+}
+
+float clamp(float x, float l, float h)
+{
+    if (x < l)
+        return l;
+    else if (x > h)
+        return h;
+    else
+        return x;
+}
+
 float mfNoise(float x, float y)
 {
     float ret = 0;
     float amp = 1.0f;
+    float signal;
     double r[2];
+    float weight = 1.0;
 
     r[0] = x;
     r[1] = y;
 
     for (int i = 0; i < 5; i++)
     {
-        ret += (float)(amp * noise2(r));
-        amp /= 3.0f;
+        ret += (signal = weight * amp * (float)noise2(r));
+        amp /= 1.5f;
         r[0] *= 2.0f;
         r[1] *= 2.0f;
+        weight = clamp(signal / 0.3, 0.0f, 1.0f);
     }
 
     return ret;
@@ -45,7 +63,7 @@ bool initVideo()
     if (SDL_Init(SDL_INIT_VIDEO))
         return false;
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_Surface* screen = SDL_SetVideoMode(640, 480, 32, SDL_OPENGL);
+    SDL_Surface* screen = SDL_SetVideoMode(800, 600, 32, SDL_OPENGL);
     if (!screen)
         return false;
 
@@ -56,11 +74,11 @@ bool initGL()
 {
     glEnable(GL_TEXTURE_2D);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glViewport(0, 0, 640, 480);
+    glViewport(0, 0, 800, 600);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0.0f, 640, 480, 0.0f, -1.0f, 1.0f);
+    glOrtho(0.0f, 800, 600, 0.0f, -1.0f, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
