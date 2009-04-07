@@ -24,6 +24,15 @@ float clamp(float x, float l, float h)
     return (x > h) ? h : ((x < l) ? l: x);
 }
 
+void colorFromXYZ(float x, float y, float z)
+{
+    float k = (float)(2.0 * PI * sqrt(3.0));
+    float r = 0.9f * (float)(cos(k * z) * cos(k * z)) + 0.5f;
+    float g = z;
+    float b = z * z;
+    glColor3f(r, g, b);
+}
+
 void setup()
 {
     glEnable(GL_COLOR_MATERIAL);
@@ -40,14 +49,66 @@ void setup()
     glLoadIdentity();
     gluPerspective(45.0, 800.0 / 600.0, 0.01, 100.0);
 
-    float lightPos[4] = {0.0f, 1.0f, 1.0f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
     glShadeModel(GL_SMOOTH);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
+    float xlo, ylo, xhi, yhi, dx, dy;
+    xhi = yhi = (float)(1.0 / sqrt(3.0));
+    xlo = ylo = -xhi;
+    dx = dy = (xhi - xlo) / N;
+
+    GLuint sphSegList = glGenLists(1);
+
+    glNewList(sphSegList, GL_COMPILE);
+    for (int i = 0; i < N; i++)
+    {
+        glBegin(GL_TRIANGLE_STRIP);
+        for (int j = 0; j <= N; j++)
+        {
+            float x = xlo + j * dx;
+            float y = ylo + i * dy;
+            float z = xhi;
+            float norm = sqrt(x * x + y * y + z * z);
+            x /= norm;
+            y /= norm;
+            z /= norm;
+            colorFromXYZ(x, y, z);
+            glNormal3f(x, y, z);
+            glVertex3f(x, y, z);
+            x = xlo + j * dx;
+            y = ylo + (i + 1) * dy;
+            z = xhi;
+            norm = sqrt(x * x + y * y + z * z);
+            x /= norm;
+            y /= norm;
+            z /= norm;
+            colorFromXYZ(x, y, z);
+            glNormal3f(x, y, z);
+            glVertex3f(x, y, z);
+        }
+        glEnd();
+    }
+    glEndList();
+
     sphereList = glGenLists(1);
 
-    glNewList(sphereList, GL_COMPILE); 
+    glNewList(sphereList, GL_COMPILE);
+    glMatrixMode(GL_MODELVIEW);
+    glCallList(sphSegList);
+    glPushMatrix();
+    glRotatef(180.0, 1.0, 0.0, 0.0);
+    glCallList(sphSegList);
+    glPopMatrix();
+    glPushMatrix();
+    glRotatef(90.0, 1.0, 0.0, 0.0);
+    glCallList(sphSegList);
+    glRotatef(90.0, 0.0, 1.0, 0.0);
+    glCallList(sphSegList);
+    glRotatef(90.0, 0.0, 1.0, 0.0);
+    glCallList(sphSegList);
+    glRotatef(90.0, 0.0, 1.0, 0.0);
+    glCallList(sphSegList);
+    glPopMatrix();
     glEndList();
 }
 
@@ -85,11 +146,13 @@ void update()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	gluLookAt(
-		dist * cos(alpha) * cos(beta) + 0.5,
-		dist * sin(alpha) * cos(beta) + 0.5,
+		dist * cos(alpha) * cos(beta),
+		dist * sin(alpha) * cos(beta),
 		dist * sin(beta),
-		0.5, 0.5, 0.0,
+		0.0, 0.0, 0.0,
 		0.0, 0.0, 1.0);
+    float lightPos[4] = {0.0f, 1.0f, 1.0f, 0.0f};
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
 }
 
 bool handleEvent(const SDL_Event& e)
