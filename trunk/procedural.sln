@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "multifractal_terrain", "mul
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "infinite_maze", "infinite_maze\infinite_maze.vcproj", "{CBC6EAAA-B445-42B9-ACF6-AA752401819F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sphere_tesselation", "sphere_tesselation\sphere_tesselation.vcproj", "{218E321A-BF28-4260-B893-3528CC504AB1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +21,10 @@ Global
 		{CBC6EAAA-B445-42B9-ACF6-AA752401819F}.Debug|Win32.Build.0 = Debug|Win32
 		{CBC6EAAA-B445-42B9-ACF6-AA752401819F}.Release|Win32.ActiveCfg = Release|Win32
 		{CBC6EAAA-B445-42B9-ACF6-AA752401819F}.Release|Win32.Build.0 = Release|Win32
+		{218E321A-BF28-4260-B893-3528CC504AB1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{218E321A-BF28-4260-B893-3528CC504AB1}.Debug|Win32.Build.0 = Debug|Win32
+		{218E321A-BF28-4260-B893-3528CC504AB1}.Release|Win32.ActiveCfg = Release|Win32
+		{218E321A-BF28-4260-B893-3528CC504AB1}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
