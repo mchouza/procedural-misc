@@ -46,10 +46,7 @@ void setup()
 {
     glewInit();
     
-    glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
     glEnable(GL_NORMALIZE);
     //glPolygonMode(GL_FRONT_AND_BACK , GL_LINE);
 
@@ -64,13 +61,24 @@ void setup()
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
     GLuint shaderProg = glCreateProgram();
+    GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
+    const char* vertShaderSource =  "varying vec3 pos;\n"
+                                    "void main()\n"
+                                    "{\n"
+                                    "    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
+                                    "    pos = vec3(gl_Vertex);\n"
+                                    "}\n";
+    glShaderSource(vertShader, 1, &vertShaderSource, 0);
+    glCompileShader(vertShader);
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-    const char* shaderSource =  "void main()\n"
-                                "{\n"
-                                "    gl_FragColor = vec4 (1.0, 1.0, 0.0, 1.0);\n"
-                                "}\n";
-    glShaderSource(fragShader, 1, &shaderSource, 0);
+    const char* fragShaderSource =  "varying vec3 pos;\n"
+                                    "void main()\n"
+                                    "{\n"
+                                    "    gl_FragColor = vec4(sin(pos.z), cos(pos.z), 0.0, 1.0);\n"
+                                    "}\n";
+    glShaderSource(fragShader, 1, &fragShaderSource, 0);
     glCompileShader(fragShader);
+    glAttachShader(shaderProg, vertShader);
     glAttachShader(shaderProg, fragShader);
     glLinkProgram(shaderProg);
     glUseProgram(shaderProg);
@@ -174,8 +182,6 @@ void update()
 		dist * sin(beta),
 		0.0, 0.0, 0.0,
 		0.0, 0.0, 1.0);
-    float lightPos[4] = {0.0f, 1.0f, 1.0f, 0.0f};
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
 }
 
 bool handleEvent(const SDL_Event& e)
