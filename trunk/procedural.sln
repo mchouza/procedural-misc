@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "infinite_maze", "infinite_m
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sphere_tesselation", "sphere_tesselation\sphere_tesselation.vcproj", "{218E321A-BF28-4260-B893-3528CC504AB1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shader_test", "shader_test\shader_test.vcproj", "{BDE1CA86-7485-40E3-88E6-E9A286861F90}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -25,6 +27,10 @@ Global
 		{218E321A-BF28-4260-B893-3528CC504AB1}.Debug|Win32.Build.0 = Debug|Win32
 		{218E321A-BF28-4260-B893-3528CC504AB1}.Release|Win32.ActiveCfg = Release|Win32
 		{218E321A-BF28-4260-B893-3528CC504AB1}.Release|Win32.Build.0 = Release|Win32
+		{BDE1CA86-7485-40E3-88E6-E9A286861F90}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BDE1CA86-7485-40E3-88E6-E9A286861F90}.Debug|Win32.Build.0 = Debug|Win32
+		{BDE1CA86-7485-40E3-88E6-E9A286861F90}.Release|Win32.ActiveCfg = Release|Win32
+		{BDE1CA86-7485-40E3-88E6-E9A286861F90}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
