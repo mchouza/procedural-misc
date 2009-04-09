@@ -26,10 +26,9 @@ float clamp(float x, float l, float h)
 
 void colorFromXYZ(float x, float y, float z)
 {
-    float k = (float)(2.0 * PI * sqrt(3.0));
-    float r = 0.9f * (float)(cos(k * z) * cos(k * z)) + 0.5f;
-    float g = z;
-    float b = z * z;
+    float r = cos(5 * z);
+    float g = cos(8 * atan2(x, y));
+    float b = cos(10 * z);
     glColor3f(r, g, b);
 }
 
@@ -57,7 +56,98 @@ void setup()
     xlo = ylo = -xhi;
     dx = dy = (xhi - xlo) / N;
 
-    GLuint sphSegList = glGenLists(1);
+    GLuint sphCapList = glGenLists(1);
+
+    // The cap is a mesh of N triangle strips made of 2N triangles each and 
+    // running in +X direction. The strips are laid out in +Y direction
+    glNewList(sphCapList, GL_COMPILE);
+    for (int i = 0; i < N; i++)
+    {
+        glBegin(GL_TRIANGLE_STRIP);
+        for (int j = 0; j <= N; j++)
+        {
+            float x = xlo + j * dx;
+            float y = ylo + i * dy;
+            float z = (float)sqrt(1.0 - x*x - y*y);
+            colorFromXYZ(x, y, z);
+            glNormal3f(x, y, z);
+            glVertex3f(x, y, z);
+            y += dy;
+            z = (float)sqrt(1.0 - x*x - y*y);
+            colorFromXYZ(x, y, z);
+            glNormal3f(x, y, z);
+            glVertex3f(x, y, z);
+        }
+        glEnd();
+    }
+    glEndList();
+
+    GLuint sphBeltSegList = glGenLists(1);
+    
+    // The belt segment are meshes of N triangles strips, each made of 2N 
+    // triangles and running in +Z direction. The strips are laid out in +X
+    // direction
+    glNewList(sphBeltSegList, GL_COMPILE);
+    for (int i = 0; i < N; i++)
+    {
+        float px1 = xlo + i * dx;
+        float px2 = px1 + dx;
+        float py = ylo;
+        float zhi1 = (float)sqrt(1.0 - px1*px1 - py*py);
+        float zhi2 = (float)sqrt(1.0 - px2*px2 - py*py);
+        float zlo1 = -zhi1;
+        float zlo2 = -zhi2;
+        float dz1 = (zhi1 - zlo1) / N;
+        float dz2 = (zhi2 - zlo2) / N;
+        glBegin(GL_TRIANGLE_STRIP);
+        for (int j = 0; j <= N; j++)
+        {
+            float x = px1;
+            float y = py;
+            float z = zlo1 + j * dz1;
+            float norm = sqrt(x*x + y*y + z*z);
+            x /= norm;
+            y /= norm;
+            z /= norm;
+            colorFromXYZ(x, y, z);
+            glNormal3f(x, y, z);
+            glVertex3f(x, y, z);
+            x = px2;
+            y = py;
+            z = zlo2 + j * dz2;
+            norm = sqrt(x*x + y*y + z*z);
+            x /= norm;
+            y /= norm;
+            z /= norm;
+            colorFromXYZ(x, y, z);
+            glNormal3f(x, y, z);
+            glVertex3f(x, y, z);
+        }
+        glEnd();
+    }
+    glEndList();
+
+    sphereList = glGenLists(1);
+
+    glNewList(sphereList, GL_COMPILE);
+    glMatrixMode(GL_MODELVIEW);
+    glCallList(sphCapList);
+    glPushMatrix();
+    glRotatef(180.0f, 1.0f, 0.0f, 0.0f);
+    glCallList(sphCapList);
+    glPopMatrix();
+    glPushMatrix();
+    glCallList(sphBeltSegList);
+    glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
+    glCallList(sphBeltSegList);
+    glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
+    glCallList(sphBeltSegList);
+    glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
+    glCallList(sphBeltSegList);
+    glPopMatrix();
+    glEndList();
+
+#if 0 // Old tesselation
 
     glNewList(sphSegList, GL_COMPILE);
     for (int i = 0; i < N; i++)
@@ -110,6 +200,9 @@ void setup()
     glCallList(sphSegList);
     glPopMatrix();
     glEndList();
+
+#endif
+
 }
 
 void update()
