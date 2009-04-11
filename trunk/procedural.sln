@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shader_test", "shader_test\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "flat_clipmap", "flat_clipmap\flat_clipmap.vcproj", "{4EF27E6C-09FE-4AD7-92A9-068486C1D981}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shader_noise", "shader_noise\shader_noise.vcproj", "{D3461D9B-C541-4506-9F11-A62EEFF092E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -37,6 +39,10 @@ Global
 		{4EF27E6C-09FE-4AD7-92A9-068486C1D981}.Debug|Win32.Build.0 = Debug|Win32
 		{4EF27E6C-09FE-4AD7-92A9-068486C1D981}.Release|Win32.ActiveCfg = Release|Win32
 		{4EF27E6C-09FE-4AD7-92A9-068486C1D981}.Release|Win32.Build.0 = Release|Win32
+		{D3461D9B-C541-4506-9F11-A62EEFF092E4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D3461D9B-C541-4506-9F11-A62EEFF092E4}.Debug|Win32.Build.0 = Debug|Win32
+		{D3461D9B-C541-4506-9F11-A62EEFF092E4}.Release|Win32.ActiveCfg = Release|Win32
+		{D3461D9B-C541-4506-9F11-A62EEFF092E4}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

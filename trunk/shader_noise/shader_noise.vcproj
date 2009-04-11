@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="flat_clipmap"
-	ProjectGUID="{4EF27E6C-09FE-4AD7-92A9-068486C1D981}"
-	RootNamespace="flat_clipmap"
+	Name="shader_noise"
+	ProjectGUID="{D3461D9B-C541-4506-9F11-A62EEFF092E4}"
+	RootNamespace="shader_noise"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -178,6 +178,14 @@
 		<Filter
 			Name="Shaders"
 			>
+			<File
+				RelativePath=".\noise.fs"
+				>
+			</File>
+			<File
+				RelativePath=".\noise.vs"
+				>
+			</File>
 			<File
 				RelativePath=".\test.fs"
 				>
