@@ -179,6 +179,14 @@
 			Name="Shaders"
 			>
 			<File
+				RelativePath=".\noise.fs"
+				>
+			</File>
+			<File
+				RelativePath=".\noise.vs"
+				>
+			</File>
+			<File
 				RelativePath=".\test.fs"
 				>
 			</File>
