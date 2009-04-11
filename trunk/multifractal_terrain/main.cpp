@@ -10,7 +10,7 @@ namespace
 {
 	const double PI = 3.1415926535897932384626433832795;
 
-    const int N = 128;
+    const int N = 512;
 
 	double alpha = 0.0;
 	double beta = 0.0;

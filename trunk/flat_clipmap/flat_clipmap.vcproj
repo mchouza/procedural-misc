@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="shader_test"
-	ProjectGUID="{BDE1CA86-7485-40E3-88E6-E9A286861F90}"
-	RootNamespace="shader_test"
+	Name="flat_clipmap"
+	ProjectGUID="{4EF27E6C-09FE-4AD7-92A9-068486C1D981}"
+	RootNamespace="flat_clipmap"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>

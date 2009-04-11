@@ -27,7 +27,7 @@ namespace
 	double beta = 0.0;
 	double dist = 2.0;
 
-    GLuint sphereList;
+    GLuint terrainList;
 
 	bool keyMap[SDLK_LAST];
 }
@@ -119,96 +119,26 @@ void setup()
     glLinkProgram(shaderProg);
     glUseProgram(shaderProg);
 
+    terrainList = glGenLists(1);
+
     float xlo, ylo, xhi, yhi, dx, dy;
-    xhi = yhi = (float)(1.0 / sqrt(3.0));
+    xhi = yhi = 1.0;
     xlo = ylo = -xhi;
     dx = dy = (xhi - xlo) / N;
 
-    GLuint sphCapList = glGenLists(1);
-
-    // The cap is a mesh of N triangle strips made of 2N triangles each and 
-    // running in +X direction. The strips are laid out in +Y direction
-    glNewList(sphCapList, GL_COMPILE);
+    glNewList(terrainList, GL_COMPILE);
     for (int i = 0; i < N; i++)
     {
         glBegin(GL_TRIANGLE_STRIP);
         for (int j = 0; j <= N; j++)
         {
-            float x = xlo + j * dx;
-            float y = ylo + i * dy;
-            float z = (float)sqrt(1.0 - x*x - y*y);
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
-            y += dy;
-            z = (float)sqrt(1.0 - x*x - y*y);
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
+            glNormal3f(0.0f, 0.0f, 1.0f);
+            glVertex3f(xlo + j * dx, ylo + i * dy, 0.0f);
+            glNormal3f(0.0f, 0.0f, 1.0f);
+            glVertex3f(xlo + j * dx, ylo + (i + 1) * dy, 0.0f);
         }
         glEnd();
     }
-    glEndList();
-
-    GLuint sphBeltSegList = glGenLists(1);
-    
-    // The belt segment are meshes of N triangles strips, each made of 2N 
-    // triangles and running in +Z direction. The strips are laid out in +X
-    // direction
-    glNewList(sphBeltSegList, GL_COMPILE);
-    for (int i = 0; i < N; i++)
-    {
-        float px1 = xlo + i * dx;
-        float px2 = px1 + dx;
-        float py = ylo;
-        float zhi1 = (float)sqrt(1.0 - px1*px1 - py*py);
-        float zhi2 = (float)sqrt(1.0 - px2*px2 - py*py);
-        float zlo1 = -zhi1;
-        float zlo2 = -zhi2;
-        float dz1 = (zhi1 - zlo1) / N;
-        float dz2 = (zhi2 - zlo2) / N;
-        glBegin(GL_TRIANGLE_STRIP);
-        for (int j = 0; j <= N; j++)
-        {
-            float x = px1;
-            float y = py;
-            float z = zlo1 + j * dz1;
-            float norm = sqrt(x*x + y*y + z*z);
-            x /= norm;
-            y /= norm;
-            z /= norm;
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
-            x = px2;
-            y = py;
-            z = zlo2 + j * dz2;
-            norm = sqrt(x*x + y*y + z*z);
-            x /= norm;
-            y /= norm;
-            z /= norm;
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
-        }
-        glEnd();
-    }
-    glEndList();
-
-    sphereList = glGenLists(1);
-
-    glNewList(sphereList, GL_COMPILE);
-    glMatrixMode(GL_MODELVIEW);
-    glCallList(sphCapList);
-    glPushMatrix();
-    glRotatef(180.0f, 1.0f, 0.0f, 0.0f);
-    glCallList(sphCapList);
-    glPopMatrix();
-    glPushMatrix();
-    glCallList(sphBeltSegList);
-    glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
-    glCallList(sphBeltSegList);
-    glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
-    glCallList(sphBeltSegList);
-    glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
-    glCallList(sphBeltSegList);
-    glPopMatrix();
     glEndList();
 }
 
@@ -273,7 +203,7 @@ void draw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glCallList(sphereList);
+    glCallList(terrainList);
 
     SDL_GL_SwapBuffers();
 }
