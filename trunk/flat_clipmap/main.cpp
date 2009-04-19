@@ -6,6 +6,7 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <GL/glew.h>
 #include <SDL.h>
@@ -23,12 +24,16 @@ namespace
 
     const int LOGN = 7;
 
-	double alpha = 0.0;
+	double alpha = PI;
 	double beta = 0.0;
     double pos[3] = {0.0, 0.0, 1.0};
 
     double time = 0.0;
+    double fps = 0.0;
 
+    GLuint squareMeshVB;
+
+    GLuint adapterMeshList;
     GLuint squareMeshList;
     GLuint holedSquareMeshList;
     
@@ -100,70 +105,196 @@ void loadShaders(std::map<std::string, GLuint>& vsm,
     }       
 }
 
+void buildAdapterMeshList(GLuint& adapterMeshList)
+{
+    unsigned n = 1 << LOGN;
+    
+    adapterMeshList = glGenLists(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, squareMeshVB);
+    GLuint adMeshEB;
+    glGenBuffers(1, &adMeshEB);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, adMeshEB);
+
+    GLuint* pEdgeData = new GLuint[((n - 2) / 2 + 1) * 4 * 3];
+    GLuint* p = pEdgeData;
+
+    for (size_t i = 0; i <= n - 2; i += 2)
+    {
+        // top
+        *p++ = i + 1;
+        *p++ = i;
+        *p++ = i + 2;
+        // bottom
+        *p++ = i + (n + 1) * n;
+        *p++ = i + 1 + (n + 1) * n;
+        *p++ = i + 2 + (n + 1) * n;
+        // left
+        *p++ = i * (n + 1);
+        *p++ = (i + 1) * (n + 1);
+        *p++ = (i + 2) * (n + 1);
+        // right
+        *p++ = (i + 1) * (n + 1) + n;
+        *p++ = i * (n + 1) + n;
+        *p++ = (i + 2) * (n + 1) + n;
+    }
+
+    glVertexPointer(4, GL_FLOAT, 0, 0);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, (p - pEdgeData) * sizeof(GLuint), pEdgeData, GL_STATIC_DRAW);
+    delete[] pEdgeData;
+
+    glNewList(adapterMeshList, GL_COMPILE);
+    glDrawElements(GL_TRIANGLES, p - pEdgeData, GL_UNSIGNED_INT, 0);
+    glEndList();
+}
+
 void buildSquareMeshList(GLuint& squareMeshList)
 {
     unsigned n = 1 << LOGN;
     
     squareMeshList = glGenLists(1);
 
+    glGenBuffers(1, &squareMeshVB);
+    glBindBuffer(GL_ARRAY_BUFFER, squareMeshVB);
+    GLuint sqMeshEB;
+    glGenBuffers(1, &sqMeshEB);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sqMeshEB);
+
     float xlo, ylo, xhi, yhi, dx, dy;
     xhi = yhi = 1.0;
     xlo = ylo = -xhi;
     dx = dy = (xhi - xlo) / n;
 
-    glNewList(squareMeshList, GL_COMPILE);
-    for (size_t i = 0; i < n; i++)
+    float* pVertexData = new float[(n + 1) * (n + 1) * 4];
+    for (size_t i = 0; i <= n; i++)
     {
-        glBegin(GL_TRIANGLE_STRIP);
         for (size_t j = 0; j <= n; j++)
         {
-            glVertex3f(xlo + j * dx, ylo + i * dy, 0.0f);
-            glVertex3f(xlo + j * dx, ylo + (i + 1) * dy, 0.0f);
+            pVertexData[4 * ((n + 1) * i + j) + 0] = xlo + dx * j;
+            pVertexData[4 * ((n + 1) * i + j) + 1] = ylo + dy * i;
+            pVertexData[4 * ((n + 1) * i + j) + 2] = 0.0f;
+            pVertexData[4 * ((n + 1) * i + j) + 3] = 1.0f;
         }
-        glEnd();
     }
+
+    GLuint* pEdgeData = new GLuint[n * (n + 1) * 2 + n];
+    GLuint* p = pEdgeData;
+    for (size_t i = 0; i < n; i++)
+    {
+        for (size_t j = 0; j <= n; j++)
+        {
+            *p++ = (i % 2) ? (n + 1) * i + (n - j) : (n + 1) * (i + 1) + j;
+            *p++ = (i % 2) ? (n + 1) * (i + 1) + (n - j) : (n + 1) * i + j;
+        }
+    }
+
+    glBufferData(GL_ARRAY_BUFFER, (n + 1) * (n + 1) * 4 * sizeof(GLfloat), pVertexData, GL_STATIC_DRAW);
+    glVertexPointer(4, GL_FLOAT, 0, 0);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, (n * (n + 1) * 2 + n) * sizeof(GLuint), pEdgeData, GL_STATIC_DRAW);
+    delete[] pVertexData;
+    delete[] pEdgeData;
+
+    glNewList(squareMeshList, GL_COMPILE);
+    glDrawElements(GL_TRIANGLE_STRIP, n * (n + 1) * 2, GL_UNSIGNED_INT, 0);
     glEndList();
 }
 
 void buildHoledSquareMeshList(GLuint& holedSquareMeshList)
 {
     unsigned n = 1 << LOGN;
-    unsigned m = n / 2;
+    unsigned m = n / 4;
     
     holedSquareMeshList = glGenLists(1);
 
-    float xlo, ylo, xhi, yhi, dx, dy;
-    xhi = yhi = 1.0;
-    xlo = ylo = -xhi;
-    dx = dy = (xhi - xlo) / n;
+    glBindBuffer(GL_ARRAY_BUFFER, squareMeshVB);
+    GLuint hsqMeshEB;
+    glGenBuffers(1, &hsqMeshEB);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hsqMeshEB);
+
+    // I'm too lazy to do this calculation properly ( :-D ), so this is a 
+    // (manual) regression: 
+    // N = 128 Size = 24705
+    // N = 64 Size = 6209
+    // N = 32 Size = 1569
+
+    // Size = 2 * (N^2 - (N/2)^2) + N + 1
+    // Size = 2 * (3 N^2 / 4) + N + 1 
+    // Size = 3 N^2 / 2 + N + 1
+
+    GLuint* pEdgeData = new GLuint[3 * n * n / 2 + n + 1];
+    GLuint* p = pEdgeData;
+    GLuint offset = n + 1;
+    GLuint intVI = offset * m + m;
+    GLuint extVI = intVI - offset;
+    GLuint spiralSegLen = m * 2;
+    // start
+    *p++ = intVI;
+    *p++ = extVI;
+    extVI++;
+    intVI++;
+    for (unsigned spiral = 0; spiral < m; spiral++)
+    {
+        // upper segment
+        for (unsigned i = 0; i < spiralSegLen; i++)
+        {
+            *p++ = intVI;
+            *p++ = extVI;
+            extVI++;
+            intVI++;
+        }
+        // corner
+        *p++ = extVI;
+        extVI += offset;
+        intVI--;
+        // right segment
+        for (unsigned i = 0; i <= spiralSegLen; i++)
+        {
+            *p++ = extVI;
+            *p++ = intVI;
+            extVI += offset;
+            intVI += offset;
+        }
+        // corner
+        *p++ = extVI;
+        extVI--;
+        intVI -= offset;
+        // bottom segment
+        for (unsigned i = 0; i <= spiralSegLen; i++)
+        {
+            *p++ = intVI;
+            *p++ = extVI;
+            extVI--;
+            intVI--;
+        }
+        // corner
+        *p++ = extVI;
+        extVI -= offset;
+        intVI++;
+        // left segment (one module longer)
+        for (unsigned i = 0; i <= spiralSegLen + 1; i++)
+        {
+            *p++ = extVI;
+            *p++ = intVI;
+            extVI -= offset;
+            intVI -= offset;
+        }
+        // skips the last corner, as it's not present
+        if (spiral == m - 1)
+            break;
+        // corner
+        *p++ = extVI;
+        extVI++;
+        intVI += offset;
+        // now spiral segments are longer
+        spiralSegLen += 2;
+    }
+
+    glVertexPointer(4, GL_FLOAT, 0, 0);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, (3 * n * n / 2 + n + 1) * sizeof(GLuint), pEdgeData, GL_STATIC_DRAW);
+    delete[] pEdgeData;
 
     glNewList(holedSquareMeshList, GL_COMPILE);
-    for (size_t i = 0; i < n; i++)
-    {
-        if (i < m / 2 || i >= n / 2 + m / 2)
-        {
-            glBegin(GL_TRIANGLE_STRIP);
-            for (size_t j = 0; j <= n; j++)
-            {
-                glVertex3f(xlo + j * dx, ylo + i * dy, 0.0f);
-                glVertex3f(xlo + j * dx, ylo + (i + 1) * dy, 0.0f);
-            }
-            glEnd();
-        }
-    }
-    for (size_t j = 0; j < n; j++)
-    {
-        if (j < m / 2 || j >= n / 2 + m / 2)
-        {
-            glBegin(GL_TRIANGLE_STRIP);
-            for (size_t i = m / 2; i <= n / 2 + m / 2; i++)
-            {
-                glVertex3f(xlo + j * dx, ylo + i * dy, 0.0f);
-                glVertex3f(xlo + (j + 1) * dx, ylo + i * dy, 0.0f);
-            }
-            glEnd();
-        }
-    }
+    glDrawElements(GL_TRIANGLE_STRIP, 3 * n * n / 2 + n + 1, GL_UNSIGNED_INT, 0);
     glEndList();
 }
 
@@ -182,6 +313,7 @@ void setupClipmap()
     timeGLSLVar = glGetUniformLocation(shaderProg, "time");
 
     buildSquareMeshList(squareMeshList);
+    buildAdapterMeshList(adapterMeshList);
     buildHoledSquareMeshList(holedSquareMeshList);
 }
 
@@ -191,6 +323,9 @@ void setup()
     
     glEnable(GL_DEPTH_TEST);
     //glPolygonMode(GL_FRONT_AND_BACK , GL_LINE);
+    glEnable(GL_CULL_FACE);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glViewport(0, 0, 1024, 768);
@@ -210,6 +345,8 @@ void update()
 	lastTime = newTime;
 
     time += deltaT;
+    if (deltaT > 0)
+        fps = 0.1 * (1.0 / deltaT) + 0.9 * fps;
 
 	double alphaPrime = 0.0, betaPrime = 0.0, distPrime = 0.0;
 
@@ -228,9 +365,14 @@ void update()
 
 	alpha += deltaT * alphaPrime;
 	beta += deltaT * betaPrime;
+#if 0
 	pos[0] += cos(alpha) * cos(beta) * distPrime * deltaT;
     pos[1] += sin(alpha) * cos(beta) * distPrime * deltaT;
-    //pos[2] += sin(beta) * distPrime * deltaT;
+    pos[2] += sin(beta) * distPrime * deltaT;
+#else
+	pos[0] += cos(alpha) * distPrime * deltaT;
+    pos[1] += sin(alpha) * distPrime * deltaT;
+#endif
 
 	alpha = (alpha > 2 * PI) ? alpha - 2 * PI : alpha;
 	alpha = (alpha < -2 * PI) ? alpha +  2 * PI : alpha;
@@ -265,20 +407,29 @@ bool handleEvent(const SDL_Event& e)
 
 void draw()
 {
+    std::ostringstream s;
+    s << fps;
+    SDL_WM_SetCaption(s.str().c_str(), 0);
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUniform3f(offsetGLSLVar,(float)pos[0], (float)pos[1], 0.0);
     glUniform1f(timeGLSLVar, (float)time);
     glUniform1f(scaleGLSLVar, 1.0f);
     glCallList(squareMeshList);
+    glCallList(adapterMeshList);
     glUniform1f(scaleGLSLVar, 2.0f);
     glCallList(holedSquareMeshList);
+    glCallList(adapterMeshList);
     glUniform1f(scaleGLSLVar, 4.0f);
     glCallList(holedSquareMeshList);
+    glCallList(adapterMeshList);
     glUniform1f(scaleGLSLVar, 8.0f);
     glCallList(holedSquareMeshList);
+    glCallList(adapterMeshList);
     glUniform1f(scaleGLSLVar, 16.0f);
     glCallList(holedSquareMeshList);
+    glCallList(adapterMeshList);
 
     SDL_GL_SwapBuffers();
 }
