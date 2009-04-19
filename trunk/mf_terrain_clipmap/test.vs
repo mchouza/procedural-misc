@@ -131,16 +131,16 @@ float snoise(vec3 P) {
 
 /*****************************************************************************/
 
-#define NUM_OCTAVES 4
+#define NUM_OCTAVES 7
 #define LACUNARITY 1.987
-#define BASIC_SCALE 0.109
-#define POWER 1 / 1.9
+#define BASIC_SCALE 0.1
+#define POWER 1 / 1.7
 
 void main()
 {
     pos = vec4(scale * gl_Vertex.xyz, 1.0);
     pos += vec4(offset.xyz, 0.0);
-    vec3 basic_pos3 = vec3(pos);
+    vec3 basic_pos3 = vec3(pos) * BASIC_SCALE;
     float h = 0.4;
     float weight = 1.0;
     for (int i = 0; i < NUM_OCTAVES; i++)
@@ -148,10 +148,10 @@ void main()
         pos += weight * h * vec4(0.0, 0.0, snoise(basic_pos3), 0.0);
         basic_pos3 *= LACUNARITY;
         h *= POWER;
-        weight = clamp(pos.z / 0.2f, 0.0f, 1.0f);
+        weight = clamp(pos.z / 0.05f, 0.0f, 1.0f);
     }
-    
-    pos.z = pow(pos.z, 2.0);
-    
-    gl_Position = gl_ModelViewProjectionMatrix * pos;
+    gl_Position = gl_ModelViewProjectionMatrix * vec4(pos.x,
+                                                      pos.y,
+                                                      clamp(pos.z, 0.0, 100.0),
+                                                      1.0);
 }

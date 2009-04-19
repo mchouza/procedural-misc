@@ -471,7 +471,8 @@ void draw()
     std::ostringstream s;
     s << fps;
     SDL_WM_SetCaption(s.str().c_str(), 0);
-    
+
+    glClearColor(0.4, 0.8, 1.0, 1.0);    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUniform3f(offsetGLSLVar,(float)pos[0], (float)pos[1], 0.0);
@@ -489,6 +490,12 @@ void draw()
     glCallList(holedSquareMeshList);
     glCallList(adapterMeshList);
     glUniform1f(scaleGLSLVar, 16.0f);
+    glCallList(holedSquareMeshList);
+    glCallList(adapterMeshList);
+    glUniform1f(scaleGLSLVar, 32.0f);
+    glCallList(holedSquareMeshList);
+    glCallList(adapterMeshList);
+    glUniform1f(scaleGLSLVar, 64.0f);
     glCallList(holedSquareMeshList);
     glCallList(adapterMeshList);
 
