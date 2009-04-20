@@ -30,6 +30,7 @@ namespace
 
     double time = 0.0;
     double fps = 0.0;
+    uint64_t frame = 0;
 
     GLuint squareMeshVB;
 
@@ -401,13 +402,23 @@ void setup()
 void update()
 {
 	static int lastTime = SDL_GetTicks();
+    static int lastTimeFPS = lastTime;
+    static uint64_t lastFrameFPS = frame;
 	int newTime = SDL_GetTicks();
 	double deltaT = (newTime - lastTime) / 1000.0;
 	lastTime = newTime;
 
     time += deltaT;
-    if (deltaT > 0)
-        fps = 0.01 * (1.0 / deltaT) + 0.99 * fps;
+    
+    if (newTime - lastTimeFPS > 1000)
+    {
+        fps = 1000.0 * (frame - lastFrameFPS) / (newTime - lastTimeFPS);
+        lastTimeFPS = newTime;
+        lastFrameFPS = frame;
+        std::ostringstream s;
+        s << fps;
+        SDL_WM_SetCaption(s.str().c_str(), 0);
+    }
 
 	double alphaPrime = 0.0, betaPrime = 0.0, distPrime = 0.0;
 
@@ -468,11 +479,7 @@ bool handleEvent(const SDL_Event& e)
 
 void draw()
 {
-    std::ostringstream s;
-    s << fps;
-    SDL_WM_SetCaption(s.str().c_str(), 0);
-
-    glClearColor(0.4, 0.8, 1.0, 1.0);    
+    glClearColor(0.4f, 0.8f, 1.0f, 1.0f);    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUniform3f(offsetGLSLVar,(float)pos[0], (float)pos[1], 0.0);
@@ -500,6 +507,7 @@ void draw()
     glCallList(adapterMeshList);
 
     SDL_GL_SwapBuffers();
+    frame++;
 }
 
 int main(int argc, char* argv[])
