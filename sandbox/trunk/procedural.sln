@@ -13,8 +13,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "flat_clipmap", "flat_clipma
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shader_noise", "shader_noise\shader_noise.vcproj", "{D3461D9B-C541-4506-9F11-A62EEFF092E4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mf_terrain_clipmap", "mf_terrain_clipmap\mf_terrain_clipmap.vcproj", "{0EA35F74-79A3-4949-97A9-36F29BEE5AAA}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw_test_app", "glfw_test_app\glfw_test_app.vcproj", "{445DF627-222A-4A42-BF75-F29478BA00EF}"
 EndProject
 Global
@@ -47,10 +45,6 @@ Global
 		{D3461D9B-C541-4506-9F11-A62EEFF092E4}.Debug|Win32.Build.0 = Debug|Win32
 		{D3461D9B-C541-4506-9F11-A62EEFF092E4}.Release|Win32.ActiveCfg = Release|Win32
 		{D3461D9B-C541-4506-9F11-A62EEFF092E4}.Release|Win32.Build.0 = Release|Win32
-		{0EA35F74-79A3-4949-97A9-36F29BEE5AAA}.Debug|Win32.ActiveCfg = Debug|Win32
-		{0EA35F74-79A3-4949-97A9-36F29BEE5AAA}.Debug|Win32.Build.0 = Debug|Win32
-		{0EA35F74-79A3-4949-97A9-36F29BEE5AAA}.Release|Win32.ActiveCfg = Release|Win32
-		{0EA35F74-79A3-4949-97A9-36F29BEE5AAA}.Release|Win32.Build.0 = Release|Win32
 		{445DF627-222A-4A42-BF75-F29478BA00EF}.Debug|Win32.ActiveCfg = Debug|Win32
 		{445DF627-222A-4A42-BF75-F29478BA00EF}.Debug|Win32.Build.0 = Debug|Win32
 		{445DF627-222A-4A42-BF75-F29478BA00EF}.Release|Win32.ActiveCfg = Release|Win32
