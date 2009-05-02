@@ -15,6 +15,12 @@ void GLFWCALL keyCB(int key, int action)
         quit = true;
 }
 
+int wcCB()
+{
+    quit = true;
+    return GL_TRUE;
+}
+
 int main(void)
 {
     glfwInit();
@@ -22,6 +28,7 @@ int main(void)
     glfwOpenWindow(1024, 768, 8, 8, 8, 8, 32, 0, GLFW_WINDOW);
 
     glfwSetKeyCallback(keyCB);
+    glfwSetWindowCloseCallback(wcCB);
 
     while (true)
     {
