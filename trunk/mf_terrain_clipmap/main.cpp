@@ -24,6 +24,7 @@ namespace
 
     const int WIDTH = 1680;
     const int HEIGHT = 1050;
+    const bool FULLSCREEN = true;
 
     bool quit = false;
 
@@ -498,7 +499,8 @@ int main(void)
     glfwInit();
 
     glfwSwapInterval(0);
-    glfwOpenWindow(WIDTH, HEIGHT, 8, 8, 8, 8, 32, 0, GLFW_FULLSCREEN);
+    glfwOpenWindow(WIDTH, HEIGHT, 8, 8, 8, 8, 32, 0,
+        FULLSCREEN ? GLFW_FULLSCREEN : GLFW_WINDOW);
 
     glfwSetKeyCallback(keyCB);
     glfwSetWindowCloseCallback(wcCB);
