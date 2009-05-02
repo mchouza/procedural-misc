@@ -1,22 +1,20 @@
 // This is *incredibly ugly* "first draft code"
 
-#define NO_SDL_GLEXT
-
 #include <cmath>
 #include <fstream>
 #include <map>
 #include <string>
 #include <sstream>
 #include <vector>
-#include <GL/glew.h>
-#include <SDL.h>
-#include <SDL_opengl.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <GL/glee.h>
+#include <GL/glfw.h>
 
-#pragma comment(lib, "SDL.lib")
-#pragma comment(lib, "SDLmain.lib")
-#pragma comment(lib, "opengl32.lib")
+#pragma comment(lib, "glee.lib")
+#pragma comment(lib, "glfw.lib")
 #pragma comment(lib, "glu32.lib")
-#pragma comment(lib, "glew32.lib")
+#pragma comment(lib, "opengl32.lib")
 
 namespace
 {
@@ -24,13 +22,18 @@ namespace
 
     const int LOGN = 8;
 
+    const int WIDTH = 1680;
+    const int HEIGHT = 1050;
+
+    bool quit = false;
+
 	double alpha = PI;
 	double beta = 0.0;
     double pos[3] = {0.0, 0.0, 0.5};
 
     double time = 0.0;
     double fps = 0.0;
-    uint64_t frame = 0;
+    unsigned __int64 frame = 0;
 
     GLuint squareMeshVB;
 
@@ -42,7 +45,7 @@ namespace
     GLint scaleGLSLVar;
     GLint timeGLSLVar;
 
-	bool keyMap[SDLK_LAST];
+	bool keyMap[GLFW_KEY_LAST + 1];
 
     int perm[256]= {151,160,137,91,90,15,
       131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
@@ -70,30 +73,12 @@ namespace
                        {1,0,-1},{-1,0,-1},{0,-1,1},{0,1,1}}; // 4 more to make 16
 }
 
+void listCurDir(std::vector<std::string>& fileList);
+void readFileInMemory(const std::string& fn, std::vector<char>& buffer);
+
 float clamp(float x, float l, float h)
 {
     return (x > h) ? h : ((x < l) ? l: x);
-}
-
-void listCurDir(std::vector<std::string>& fileList)
-{
-    WIN32_FIND_DATA fd;
-    HANDLE h = FindFirstFile("*.*", &fd);
-    fileList.clear();
-    fileList.push_back(std::string(fd.cFileName));
-    while (FindNextFile(h, &fd))
-        fileList.push_back(std::string(fd.cFileName));
-}
-
-void readFileInMemory(const std::string& fn, std::vector<char>& buffer)
-{
-    std::ifstream ifs(fn.c_str());
-    ifs.seekg(0, std::ifstream::end);
-    size_t bufSize = ifs.tellg();
-    buffer.clear();
-    buffer.resize(bufSize);
-    ifs.seekg(0);
-    ifs.read(&buffer[0], bufSize);
 }
 
 void loadShaders(std::map<std::string, GLuint>& vsm, 
@@ -378,9 +363,7 @@ void setupClipmap()
 }
 
 void setup()
-{
-    glewInit();
-    
+{  
     glEnable(GL_DEPTH_TEST);
     //glPolygonMode(GL_FRONT_AND_BACK , GL_LINE);
     glEnable(GL_CULL_FACE);
@@ -388,11 +371,11 @@ void setup()
     glEnableClientState(GL_VERTEX_ARRAY);
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glViewport(0, 0, 1024, 768);
+    glViewport(0, 0, WIDTH, HEIGHT);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0, 800.0 / 600.0, 0.01, 100.0);
+    gluPerspective(45.0, WIDTH / HEIGHT, 0.01, 100.0);
 
     GLuint dummy;
     initPermTexture(&dummy);
@@ -401,38 +384,38 @@ void setup()
 
 void update()
 {
-	static int lastTime = SDL_GetTicks();
-    static int lastTimeFPS = lastTime;
-    static uint64_t lastFrameFPS = frame;
-	int newTime = SDL_GetTicks();
-	double deltaT = (newTime - lastTime) / 1000.0;
+	static double lastTime = glfwGetTime();
+    static double lastTimeFPS = lastTime;
+    static unsigned __int64 lastFrameFPS = frame;
+	double newTime = glfwGetTime();
+	double deltaT = newTime - lastTime;
 	lastTime = newTime;
 
     time += deltaT;
     
-    if (newTime - lastTimeFPS > 1000)
+    if (newTime - lastTimeFPS > 1.0)
     {
-        fps = 1000.0 * (frame - lastFrameFPS) / (newTime - lastTimeFPS);
+        fps = (frame - lastFrameFPS) / (newTime - lastTimeFPS);
         lastTimeFPS = newTime;
         lastFrameFPS = frame;
         std::ostringstream s;
         s << fps;
-        SDL_WM_SetCaption(s.str().c_str(), 0);
+        glfwSetWindowTitle(s.str().c_str());
     }
 
 	double alphaPrime = 0.0, betaPrime = 0.0, distPrime = 0.0;
 
-	if (keyMap[SDLK_LEFT])
+	if (keyMap[GLFW_KEY_LEFT])
 		alphaPrime += 0.5;
-	if (keyMap[SDLK_RIGHT])
+	if (keyMap[GLFW_KEY_RIGHT])
 		alphaPrime -= 0.5;
-	if (keyMap[SDLK_DOWN])
+	if (keyMap[GLFW_KEY_DOWN])
 		betaPrime -= 0.5;
-	if (keyMap[SDLK_UP])
+	if (keyMap[GLFW_KEY_UP])
 		betaPrime += 0.5;
-	if (keyMap[SDLK_PAGEDOWN])
+	if (keyMap[GLFW_KEY_PAGEDOWN])
 		distPrime += 2.5;
-	if (keyMap[SDLK_PAGEUP])
+	if (keyMap[GLFW_KEY_PAGEUP])
 		distPrime -= 2.5;
 
 	alpha += deltaT * alphaPrime;
@@ -461,20 +444,21 @@ void update()
 		0.0, 0.0, 1.0);
 }
 
-bool handleEvent(const SDL_Event& e)
-{	
-	if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
-		return false;
+void GLFWCALL keyCB(int key, int action)
+{
+    if (key == GLFW_KEY_ESC)
+        quit = true;
 
-    if (e.type == SDL_QUIT)
-        return false;
-	
-	if (e.type == SDL_KEYDOWN)
-		keyMap[e.key.keysym.sym] = true;
-	else if (e.type == SDL_KEYUP)
-		keyMap[e.key.keysym.sym] = false;
+    if (action == GLFW_PRESS)
+        keyMap[key] = true;
+    else if (action == GLFW_RELEASE)
+        keyMap[key] = false;
+}
 
-	return true;
+int wcCB()
+{
+    quit = true;
+    return GL_TRUE;
 }
 
 void draw()
@@ -506,29 +490,32 @@ void draw()
     glCallList(holedSquareMeshList);
     glCallList(adapterMeshList);
 
-    SDL_GL_SwapBuffers();
     frame++;
 }
 
-int main(int argc, char* argv[])
+int main(void)
 {
-	SDL_Init(SDL_INIT_EVERYTHING);
-	SDL_SetVideoMode(1024, 768, 32, SDL_OPENGL);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    glfwInit();
 
-	setup();
+    glfwSwapInterval(0);
+    glfwOpenWindow(WIDTH, HEIGHT, 8, 8, 8, 8, 32, 0, GLFW_FULLSCREEN);
 
-	SDL_Event e;
-	while (true)
-	{
-		if (SDL_PollEvent(&e))
-			if (!handleEvent(e))
-				break;
+    glfwSetKeyCallback(keyCB);
+    glfwSetWindowCloseCallback(wcCB);
+
+    setup();
+
+    while (true)
+    {
+        if (quit)
+            break;
 
 		update();
 		draw();
-	}
 
-	SDL_Quit();
-	return 0;
+        glfwSwapBuffers();
+    }
+
+    glfwTerminate();
+    return 0;
 }
