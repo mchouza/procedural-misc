@@ -1,8 +1,12 @@
+#include <cassert>
 #include <cstring>
+#include <iostream>
+#include <GL/glew.h>
 #include <GL/glfw.h>
 
-//#define RTT_WITH_FB
+#define RTT_WITH_FB
 
+#pragma comment(lib, "glew32.lib")
 #pragma comment(lib, "glfw.lib")
 #pragma comment(lib, "opengl32.lib")
 #pragma comment(lib, "glu32.lib")
@@ -12,6 +16,7 @@ namespace
     bool quit = false;
 
     GLuint rtex;
+    GLuint fbo;
 }
 
 void GLFWCALL keyCB(int key, int action)
@@ -47,7 +52,25 @@ void renderToTextureOldWay()
 
 void renderToTextureWithFB()
 {
-    // FIXME: IMPLEMENT!
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glGenFramebuffersEXT(1, &fbo);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo);
+    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, rtex, 0);
+
+    glViewport(0, 0, 128, 128);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBegin(GL_LINES);
+    glVertex2f(-1.0f, -1.0f);
+    glVertex2f(1.0f, 1.0f);
+    glVertex2f(1.0f, -1.0f);
+    glVertex2f(-1.0f, 1.0f);
+    glEnd();
+
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, 0, 0);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+    glBindTexture(GL_TEXTURE_2D, rtex);
 }
 
 void init()
@@ -103,6 +126,8 @@ int main(void)
     glfwInit();
 
     glfwOpenWindow(1024, 768, 8, 8, 8, 8, 32, 0, GLFW_WINDOW);
+
+    glewInit(); // an OpenGL context must be created before calling glewInit()
 
     glfwSetKeyCallback(keyCB);
     glfwSetWindowCloseCallback(wcCB);

@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="render_to_texture"
-	ProjectGUID="{A5D54E7D-124F-403A-B3E5-A214244236B7}"
-	RootNamespace="render_to_texture"
+	Name="hm_terrain_via_tex"
+	ProjectGUID="{A2EC0AC6-A2B2-4209-9CF3-402B89DF963C}"
+	RootNamespace="hm_terrain_via_tex"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -21,7 +21,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="1"
+			CharacterSet="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -41,11 +41,10 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Documents and Settings\Mariano\Mis documentos\Visual Studio 2008\Projects\glut&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -63,7 +62,7 @@
 				Name="VCLinkerTool"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				SubSystem="1"
+				SubSystem="2"
 				EntryPointSymbol="mainCRTStartup"
 				TargetMachine="1"
 			/>
@@ -117,7 +116,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -139,7 +138,6 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				EntryPointSymbol="mainCRTStartup"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -175,6 +173,18 @@
 			>
 			<File
 				RelativePath=".\main.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Shaders"
+			>
+			<File
+				RelativePath=".\noise.fs"
+				>
+			</File>
+			<File
+				RelativePath=".\noise.vs"
 				>
 			</File>
 		</Filter>

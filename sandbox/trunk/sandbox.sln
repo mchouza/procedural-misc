@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw_test_app", "glfw_test_
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "render_to_texture", "render_to_texture\render_to_texture.vcproj", "{A5D54E7D-124F-403A-B3E5-A214244236B7}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hm_terrain_via_tex", "hm_terrain_via_tex\hm_terrain_via_tex.vcproj", "{A2EC0AC6-A2B2-4209-9CF3-402B89DF963C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -55,6 +57,10 @@ Global
 		{A5D54E7D-124F-403A-B3E5-A214244236B7}.Debug|Win32.Build.0 = Debug|Win32
 		{A5D54E7D-124F-403A-B3E5-A214244236B7}.Release|Win32.ActiveCfg = Release|Win32
 		{A5D54E7D-124F-403A-B3E5-A214244236B7}.Release|Win32.Build.0 = Release|Win32
+		{A2EC0AC6-A2B2-4209-9CF3-402B89DF963C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A2EC0AC6-A2B2-4209-9CF3-402B89DF963C}.Debug|Win32.Build.0 = Debug|Win32
+		{A2EC0AC6-A2B2-4209-9CF3-402B89DF963C}.Release|Win32.ActiveCfg = Release|Win32
+		{A2EC0AC6-A2B2-4209-9CF3-402B89DF963C}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
