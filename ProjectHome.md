@@ -1,0 +1,1 @@
+It's a sandbox for experimenting with procedural approaches for texturing and modeling.
